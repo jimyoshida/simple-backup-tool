@@ -49,10 +49,10 @@ Without `uid=1000,gid=1000` the mount is owned by root and `mkdir` will raise a 
 If a drive shows "No such device" despite appearing in `mount`, remount it:
 
 ```bash
-sudo umount /mnt/d && sudo mount -t drvfs D: /mnt/d -o uid=1000,gid=1000
+sudo mount -o remount,uid=1000,gid=1000 /mnt/d
 ```
 
-`mount-windows-drives.sh` in this repo automates the above — it mounts any number of drives with the invoking user's uid/gid:
+`mount-windows-drives.sh` in this repo automates the above — it mounts any number of drives with the invoking user's uid/gid, using `remount` when already mounted to preserve WSL's automount tracking:
 
 ```bash
 sudo ./mount-windows-drives.sh D E

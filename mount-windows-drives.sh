@@ -27,9 +27,9 @@ for letter in "$@"; do
     mkdir -p "$mountpoint"
 
     if mountpoint -q "$mountpoint"; then
-        umount "$mountpoint"
+        mount -o "remount,uid=${UID_OPT},gid=${GID_OPT}" "$mountpoint"
+    else
+        mount -t drvfs "${upper}:" "$mountpoint" -o "uid=${UID_OPT},gid=${GID_OPT}"
     fi
-
-    mount -t drvfs "${upper}:" "$mountpoint" -o "uid=${UID_OPT},gid=${GID_OPT}"
     echo "Mounted ${upper}: → ${mountpoint} (uid=${UID_OPT}, gid=${GID_OPT})"
 done
