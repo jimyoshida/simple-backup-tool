@@ -6,28 +6,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `sbt` (Simple Backup Tool) is a Python 3 CLI utility that wraps `rsync` and `mkisofs` to provide backup operations. It is distributed as a Debian `.deb` package.
 
-## Build Commands
+## Commands
 
 ```bash
+# Build
 make          # Build the .deb package → out/sbt_1.0.0-1_all.deb
-make install  # Install via dpkg
+make install  # Install via dpkg (requires sudo)
 make uninstall # Remove installed package
 make clean    # Remove out/ and tmp/ build artifacts
+
+# Tests
+pytest                        # Run all tests
+pytest test/test_sbt.py::test_sync_full_backup_when_no_prior  # Run a single test
 ```
 
-There are no automated tests; testing is done by running the CLI manually.
+## Layout
+
+```
+src/sbt.py        # Entire application (~90 lines)
+test/test_sbt.py  # pytest suite
+doc/sbt.1         # Unix man page
+DEBIAN/control    # Package metadata (version, deps)
+build-deb.sh      # Assembles tmp/ structure and calls dpkg-deb
+pytest.ini        # Sets testpaths=test, pythonpath=src
+```
 
 ## Architecture
 
-The entire application lives in a single file: `sbt.py` (~60 lines). It uses [Typer](https://typer.tiangolo.com/) to expose two commands:
+The entire application is `src/sbt.py`. It uses [Typer](https://typer.tiangolo.com/) to expose two commands, both invoked via `subprocess.run()`; non-zero exit codes raise `typer.Exit(1)`.
 
-- **`sbt sync <srcdir> <dstdir>`** — incremental/full directory backups using `rsync`. Snapshots go under `<dstdir>/<srcdir-basename>/backup-YYYYMMDD-HHMMSS`. Supports hardlink-based incremental backups via rsync's `--link-dest`. Pass `--full` to force a full backup. SRC must be an existing directory.
-- **`sbt iso <srcdir> <dstdir>`** — creates ISO 9660 images from a directory using `mkisofs` (provided by `genisoimage`). Outputs `<VOLNAME>.iso` in `<dstdir>` (created if absent), with Joliet and Rock Ridge extensions for cross-platform compatibility. `--volname` defaults to the source directory name uppercased; must be letters (upper or lower), digits, underscores, and hyphens only, max 32 characters. `--pubname` sets the publisher string in the image header.
-
-External tools are invoked via `subprocess.run()`. Errors result in `typer.Exit(1)`.
+- **`sbt sync <srcdir> <dstdir>`** — incremental/full directory backups using `rsync`. Snapshots land at `<dstdir>/<srcdir-basename>/backup-YYYYMMDD-HHMMSS`. Incremental backups use rsync's `--link-dest` pointed at the lexicographically latest prior snapshot; `--full` skips this.
+- **`sbt iso <srcdir> <dstdir>`** — creates an ISO 9660 image via `mkisofs` (from the `genisoimage` package). Output is `<dstdir>/<VOLNAME>.iso`. Joliet (`-J`) and Rock Ridge (`-r`) extensions are always enabled. `--volname` defaults to the source directory name uppercased; must match `[A-Za-z0-9_-]{1,32}`. `--pubname` sets the publisher string in the image header.
 
 ## Packaging
 
-- `DEBIAN/control` — Debian package metadata (version, dependencies: `genisoimage`, `rsync`, `python3-typer`)
-- `build-deb.sh` — shell script that assembles the package structure in `tmp/` and runs `dpkg-deb`
-- `sbt.1` — Unix man page documenting all commands, arguments, and usage examples
+`build-deb.sh` copies `src/sbt.py` → `tmp/usr/local/bin/sbt` (executable), gzips `doc/sbt.1` into the man path, and runs `dpkg-deb`. The version is read directly from `DEBIAN/control` by the Makefile. To release a new version, bump `Version:` in `DEBIAN/control`.
