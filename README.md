@@ -55,8 +55,9 @@ Windows drives are mounted at `/mnt/<letter>` (e.g. `/mnt/d`, `/mnt/e`). C: is a
 # Mount a drive for the current session (uid/gid=1000 gives your user ownership)
 sudo mkdir -p /mnt/e && sudo mount -t drvfs E: /mnt/e -o uid=1000,gid=1000
 
-# Make it persist across WSL restarts — add to /etc/fstab
-echo 'E: /mnt/e drvfs defaults,uid=1000,gid=1000 0 0' | sudo tee -a /etc/fstab
+# Make uid/gid persist across WSL restarts — add to /etc/wsl.conf
+# (applies to all drives WSL automounts; requires a WSL restart to take effect)
+printf '[automount]\noptions = "uid=1000,gid=1000"\n' | sudo tee -a /etc/wsl.conf
 ```
 
 Without `uid=1000,gid=1000` the mount is owned by root and `mkdir` will raise a `PermissionError`.
