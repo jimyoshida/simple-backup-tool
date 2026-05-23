@@ -16,21 +16,36 @@ See also `DEBIAN/control`.
 * `genisoimage` (provides `mkisofs`)
 * `python3-typer`
 
-**Build environment** (package names for `apt`):
+**Development** (package names for `apt`):
 
 * Ubuntu 24.04+ (including WSL)
 * `make` (GNU Make)
 * `dpkg` (provides `dpkg-deb`)
+* `python3-pytest`
 
-## Build
+## Development
+
+Install Python dependencies (typer and its transitive deps) before running or testing the code:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run `make test` to execute the pytest suite.
+
+### Build
 
 Run `make` to generate the deb package at `out/sbt_<version>_all.deb`, where `<version>` reflects the value in `DEBIAN/control`.
 
 > **Limitation:** the version is fixed at `1.0.0-1` and not incremented between releases.
 
-## Install
+### Install
 
 Run `sudo make install` to install the package.
+
+### Uninstall
+
+Run `sudo make uninstall` to remove the package.
 
 ## Using Windows drives from WSL
 

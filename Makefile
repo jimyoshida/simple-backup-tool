@@ -12,5 +12,8 @@ install:
 uninstall:
 	apt remove $(PKG_NAME)
 
+test:
+	pytest
+
 clean:
 	rm -fr out/ tmp/
